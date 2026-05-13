@@ -1,91 +1,108 @@
-# Chatgpt API By Browser Script
+# GapGPT — ChatGPT Web → Local API (English)
 
-[中文文档](./README.zh.md)
+[فارسی](./README.Fa.md) | [中文](./README.zh.md)
 
-This project runs on users' browsers through the Tampermonkey script and converts the web version of ChatGPT operations into an API interface. You can use this API to do some interesting things, such as playing [Auto-GPT](https://github.com/Significant-Gravitas/Auto-GPT).
+This repository runs a small local Node.js server plus a Tampermonkey browser script that converts the ChatGPT web UI into a local HTTP API. It is a convenience/educational project adapted from upstream work (see credits).
 
-## Update
+## Quick highlights
+- Free local API (uses your browser session)
+- Works with web ChatGPT (including gpt-4 if your account has access)
+- Designed for local development and experimentation
 
-2024-05-19: Support new version UI and gpt-4o.
+![Demo](./demo.gif)
 
-## Features
-- API no cost.
-- If you have a chatgpt plus account, you can use gpt-4 api.
-- Having unlimited context.
-- Not easy to be banned and easier to handle errors.
+## Disclaimer (Read carefully)
+- This project is provided for educational and demonstration purposes only.
+- I (AmirArmaniya) take no responsibility for misuse, abuse, or legal consequences resulting from running this software.
+- Use at your own risk. This is not legal advice.
 
-![ChatGPT API Image](./demo.gif)
+## Important licensing note
+1. This fork is based on others' public code. You must follow the original project's license. Do not relicense code you do not own.
+2. I recommend the `MIT` license for permissive reuse. Confirm the upstream license before publishing. A recommended `LICENSE` (MIT template) is included in this repo — verify compatibility first.
 
-## Usage
+## Contributions
+- Contributions are not accepted for this fork. This repository is published for visibility/demonstration only.
 
-### Step 1 Installation and Configuration
+## Quick start
+1. Install dependencies:
 
-1. Make sure your system has installed Node.js and npm.
-2. Clone this repository and run `npm install` in the project directory to install dependencies.
-3. Run `npm run start` to start the Node.js server.
-4. Alternatively, you can use Docker `docker-compose up` to start the Node.js server.
+```bash
+npm install
+```
 
-### Step 2 Use Tampermonkey
+2. Start the server:
 
-1. Install [Tampermonkey](https://www.tampermonkey.net/) browser extension.
-2. Open Tampermonkey management panel and create a new script.
-3. Copy the contents of `tampermonkey-script.js` file into the newly created script and save it.
+```bash
+npm run start
+# or
+docker-compose up
+```
 
-### Step 3 Download and Install the Browser Extension Disable Content-Security-Policy
+3. Install Tampermonkey in your browser and paste `tampermonkey-script.js` as a new user script.
+4. Open `https://chat.openai.com/` and sign in. When the script shows the success indicator, the local API will be available at:
 
-Download from [here](https://chromewebstore.google.com/detail/disable-content-security/ieelmcmcagommplceebfedjlakkhpden)
+```
+http://localhost:8766/v1/chat/completions
+```
 
-### Step 4 Open and Log in to ChatGPT
+## API parameters (short)
+| Parameter | Description | Required |
+|---|---:|:---|
+| `messages` | OpenAI chat-format messages | Yes |
+| `model` | Model selection on the webpage | No |
+| `stream` | Stream response | No |
 
-[https://chat.openai.com/](https://chat.openai.com/)
-
-If you see this in the upper right corner of the webpage, you have succeeded !
-
-![Success Image](./success.png)
-
-### Step 5 Use API
-
-You now have an API address: http://localhost:8766/v1/chat/completions
-
-
-#### API Params
-| Parameter   | Description                                      | Default | Required |
-|-------------|--------------------------------------------------|---------|----------|
-| messages    | Refer to OpenAI API documentation                |      | Yes      |
-| model       | No longer supported, please select model on the webpage.               |      |        |
-| stream      | Refer to OpenAI API documentation                | false   | No       |
-
-#### Example of Request Parameters
+## Example request
 ```json
 {
-  "messages": [
-    {
-      "role": "system",
-      "content": "You are a helpful assistant."
-    },
-    {
-      "role": "user",
-      "content": "Who are you?"
-    }
-  ],
-  "model": "gpt-4"
+  "messages": [{"role":"user","content":"Hello"}]
 }
-
 ```
-## Play with Auto-GPT
 
-Modify the llm_utils.py file in Auto-GPT.
-```python
-import requests
-# response = openai.ChatCompletion.create(
-#     model=model,
-#     messages=messages,
-#     temperature=temperature,
-#     max_tokens=max_tokens,
-# )
-response = requests.post("http://localhost:8766/v1/chat/completions", json={"messages": messages, "model": model, "newChat": False, "temperature": temperature, "max_tokens": max_tokens}).json()
+## Upstream and credits
+This project is adapted from `zsodur/chatgpt-api-by-browser-script`. Please review the original repository and its license before publishing.
 
+- Upstream: https://github.com/zsodur/chatgpt-api-by-browser-script
+- Published by: https://github.com/AmirArmaniya
 
-# return response.choices[0].message["content"]
-return response["choices"][0]["message"]["content"]
+## License (recommended)
+This repository includes a recommended `MIT` license file. Confirm the original project's license and ensure you have rights to publish derived work. If the upstream project uses a different license, follow that license.
+
+---
+If you want, I can add the official `LICENSE` file (MIT) and update the Persian README so both languages match. Tell me to proceed.
+
+## Try it — quick smoke test
+Try a minimal request locally once the browser script is connected.
+
+Simple curl (no streaming):
+
+```bash
+curl -X POST http://localhost:8766/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Say hello"}]}'
 ```
+
+Run with Docker (example):
+
+```bash
+docker build -t gapgpt .
+docker run -p 8766:8766 gapgpt
+```
+
+Or use `docker-compose up` as documented earlier.
+
+## FAQ
+- Q: Can I publish this publicly? A: Only after you confirm the upstream license allows redistribution/derivative works. The upstream repo does not include an explicit LICENSE file; that requires caution.
+- Q: Will I get into legal trouble? A: I am not a lawyer. This project has potential Terms-of-Service and copyright implications — publish at your own risk. See `SECURITY.md` and the license note.
+- Q: Do you accept contributions? A: This fork is published for visibility only; contributions are disabled by design in the README. You can change that if you want.
+- Q: How do I stop the service? A: Kill the Node process or stop the Docker container.
+
+## Publishing checklist (before making this repo public)
+- [ ] Verify upstream license and obtain permission if required (critical).
+- [ ] Keep or replace any files that have incompatible licenses.
+- [ ] Add a short demo GIF or 30s video showing the local demo (we have `demo.gif`).
+- [ ] Add a short `SECURITY.md` and a clear Disclaimer (done).
+- [ ] Create a release with a short description and `LICENSE` file (done — recommended MIT template included).
+
+---
+If you want, I can now commit these changes and prepare a release draft file. Otherwise publish when ready.

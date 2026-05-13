@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         ChatGPT API By Browser Script
+// @name         ChatGPT API By Browser Script (Gapgpt.app)
 // @namespace    http://tampermonkey.net/
 // @version      1
-// @match        https://chatgpt.com/*
+// @match        https://gapgpt.app/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=openai.com
 // @grant        GM_webRequest
 // @license MIT
@@ -22,37 +22,54 @@ function cleanText(inputText) {
   return cleanedText;
 }
 function getTextFromNode(node) {
-
   let result = '';
-
   if (!node) return result;
 
-  if (
-    node.classList.contains('text-token-text-secondary') &&
-    node.classList.contains('bg-token-main-surface-secondary')
-  ) {
-    return result;
+  // GAPGPT.SELECTOR.UPDATE.ME: Update these class names if gapgpt.app changes their styling
+  // These are classes to skip (like system messages or metadata)
+  const skipClasses = [
+    'text-token-text-secondary',
+    'bg-token-main-surface-secondary',
+    'feedback-section',
+    'action-buttons',
+    'q-btn',
+    'q-icon'
+  ];
+  
+  // Check if node or any parent has skip classes
+  let skip = false;
+  let current = node;
+  while (current && current !== document.body) {
+    if (current.classList) {
+      for (const cls of skipClasses) {
+        if (current.classList.contains(cls)) {
+          skip = true;
+          break;
+        }
+      }
+      if (skip) break;
+    }
+    current = current.parentElement;
   }
+  
+  if (skip) return result;
 
   const childNodes = node.childNodes;
-
   for (let i = 0; i < childNodes.length; i++) {
     let childNode = childNodes[i];
     if (childNode.nodeType === Node.TEXT_NODE) {
       result += childNode.textContent;
     } else if (childNode.nodeType === Node.ELEMENT_NODE) {
-      let tag = childNode.tagName.toLowerCase();
-      if (tag === 'code') {
-        result += getTextFromNode(childNode);
-      } else {
-        result += getTextFromNode(childNode);
+      // Skip script and style tags
+      const tag = childNode.tagName.toLowerCase();
+      if (tag === 'script' || tag === 'style') {
+        continue;
       }
+      result += getTextFromNode(childNode);
     }
   }
-
   return cleanText(result);
 }
-
 function sleep(time) {
   return new Promise((resolve) => setTimeout(resolve, time));
 }
@@ -64,68 +81,75 @@ class App {
     this.observer = null;
     this.stop = false;
     this.dom = null;
-    this.lastText = null; // Track the last message text
+    this.lastText = null;
+    this.lastMessageElement = null; // Track the last message element to avoid duplicates
   }
 
   async start({ text, model, newChat }) {
     this.stop = false;
     log('Starting to edit or send a message');
 
-    // Check for the edit button
-    const editButton = document.querySelector(
-      'button.flex.h-9.w-9.items-center.justify-center.rounded-full.text-token-text-secondary.transition.hover\\:bg-token-main-surface-tertiary'
-    );
-    if (editButton) {
-      log('Edit button found, clicking it');
-      editButton.click();
-      await sleep(500);
-
-      // Select all text and replace with the new text
-      const textarea = document.querySelector('textarea');
+    // GAPGPT.SELECTOR.UPDATE.ME: Update the textarea selector for gapgpt.app
+    // Based on HTML: <textarea id="f_7f6f4aba-2d21-4758-863e-9b5637eb6d91" ...>
+    const textareaSelectors = [
+      '#f_7f6f4aba-2d21-4758-863e-9b5637eb6d91', // Specific ID from HTML
+      '.q-field__native.q-placeholder.bidi-textarea', // Class-based selector
+      'textarea[placeholder="سوال خود را بپرسید..."]', // Placeholder-based
+      'textarea[dir="rtl"]' // Direction-based
+    ];
+    
+    let textarea = null;
+    for (const selector of textareaSelectors) {
+      textarea = document.querySelector(selector);
       if (textarea) {
-        log('Textarea found, replacing text');
-        textarea.value = text;
-        textarea.select();
-        const event = new Event('input', { bubbles: true });
-        textarea.dispatchEvent(event);
-
-        // Adding a small delay before pressing the send button
-        await sleep(500);
-
-        // Click the send button to send the edited message
-        const sendButton = document.querySelector(
-          'button.btn.relative.btn-primary'
-        );
-        if (sendButton) {
-          log('Send button found, clicking it');
-          sendButton.click();
-        } else {
-          log('Error: Send button not found');
-        }
-      } else {
-        log('Error: Textarea not found');
-      }
-    } else {
-      log('No edit button found, sending a new message');
-      const textarea = document.querySelector('textarea');
-      if (textarea) {
-        textarea.value = text;
-        const event = new Event('input', { bubbles: true });
-        textarea.dispatchEvent(event);
-        await sleep(500);
-        const sendButton = document.querySelector(
-          'button.mb-1.mr-1.flex.h-8.w-8.items-center.justify-center.rounded-full.bg-black.text-white.transition-colors.hover\\:opacity-70.focus-visible\\:outline-none.focus-visible\\:outline-black.disabled\\:bg-\\[\\#D7D7D7\\].disabled\\:text-\\[\\#f4f4f4\\].disabled\\:hover\\:opacity-100.dark\\:bg-white.dark\\:text-black.dark\\:focus-visible\\:outline-white.disabled\\:dark\\:bg-token-text-quaternary.dark\\:disabled\\:text-token-main-surface-secondary'
-        );
-        if (sendButton) {
-          log('Send button found, clicking it');
-          sendButton.click();
-        } else {
-          log('Error: Send button not found');
-        }
-      } else {
-        log('Error: Textarea not found');
+        log(`Found textarea with selector: ${selector}`);
+        break;
       }
     }
+
+    if (!textarea) {
+      log('Error: Textarea not found with any selector');
+      return;
+    }
+
+    // Check if we want to edit an existing message or send a new one
+    // For gapgpt.app, we'll always send a new message for simplicity
+    // (Editing would require finding the last user message and checking for edit capability)
+    log('No edit button found, sending a new message');
+    
+    // Clear and set the text
+    textarea.value = text;
+    
+    // Trigger input event to notify the app of the change
+    const event = new Event('input', { bubbles: true });
+    textarea.dispatchEvent(event);
+    
+    // Wait a bit for the UI to update
+    await sleep(500);
+    
+    // For gapgpt.app, sending happens when Enter is pressed in the textarea
+    // We'll simulate pressing Enter
+    const enterEvent = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      code: 'Enter',
+      which: 13,
+      keyCode: 13,
+      bubbles: true
+    });
+    textarea.dispatchEvent(enterEvent);
+    
+    // Also try the Ctrl+Enter combination in case that's required
+    const ctrlEnterEvent = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      code: 'Enter',
+      which: 13,
+      keyCode: 13,
+      ctrlKey: true,
+      bubbles: true
+    });
+    textarea.dispatchEvent(ctrlEnterEvent);
+    
+    log('Message sent via Enter key simulation');
 
     this.observeMutations();
   }
@@ -133,36 +157,106 @@ class App {
   async observeMutations() {
     let isStart = false;
     this.observer = new MutationObserver(async (mutations) => {
-      let stopButton = document.querySelector('button.bg-black .icon-lg');
-      if (stopButton) {
-        isStart = true;
+      // Look for elements that indicate response generation has started
+      // Common indicators: loading spinners, specific classes that appear during generation
+      
+      // GAPGPT.SELECTOR.UPDATE.ME: Update these selectors for gapgpt.app's loading indicators
+      const startSelectors = [
+        '.q-spinner', // Generic spinner class from Quasar framework
+        '.loading',
+        '[aria-label*="loading" i]',
+        '[aria-label*="در حال تولید" i]', // Persian for "generating"
+        '.bot-message:not([data-processed])' // New bot messages that haven't been processed
+      ];
+      
+      let foundStartIndicator = false;
+      for (const selector of startSelectors) {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+          // Check if any of these elements are newly added or visible
+          for (const element of elements) {
+            if (element.offsetParent !== null || 
+                (element.getAttribute && element.getAttribute('data-processed') === null)) {
+              foundStartIndicator = true;
+              break;
+            }
+          }
+          if (foundStartIndicator) break;
+        }
+      }
+      
+      if (!foundStartIndicator) {
+        // Alternative approach: look for new bot messages
+        const botMessages = document.querySelectorAll('.bot-message');
+        if (botMessages.length > 0) {
+          const lastBotMessage = botMessages[botMessages.length - 1];
+          // If this is a new bot message we haven't seen before
+          if (lastBotMessage !== this.lastMessageElement) {
+            foundStartIndicator = true;
+          }
+        }
       }
 
-      if (!isStart) {
-        log('Not start, there is no stop button');
+      if (!foundStartIndicator) {
         return;
       }
 
-      const list = [...document.querySelectorAll('div.agent-turn')];
-      const last = list[list.length - 1];
-      if (!last && stopButton) {
-        log('Error: No last message found');
-        return;
+      isStart = true;
+      
+      // Wait a bit for the response to start appearing
+      await sleep(1000);
+      
+      // Now look for the actual response text
+      // GAPGPT.SELECTOR.UPDATE.ME: Update these selectors for gapgpt.app's response containers
+      const responseSelectors = [
+        '.bot-message .markdown-container', // From HTML: <div class="markdown-container" data-block-id="...">
+        '.bot-message [dir="rtl"]', // Right-to-left text in bot messages
+        '.bot-message p', // Paragraphs in bot messages
+        '.bot-message', // Fallback to entire bot message
+        '.message-container.bot-message' // More specific
+      ];
+      
+      let lastText = '';
+      let responseElement = null;
+      
+      for (const selector of responseSelectors) {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+          // Get the last element (most recent response)
+          responseElement = elements[elements.length - 1];
+          if (responseElement) {
+            lastText = getTextFromNode(responseElement);
+            if (lastText.trim() !== '') {
+              break;
+            }
+          }
+        }
       }
-
-      let lastText = getTextFromNode(
-        last.querySelector('div[data-message-author-role="assistant"]')
-      );
-
-      if ((!lastText || lastText === this.lastText) && stopButton) {
+      
+      // If we still don't have text, try to get it from the bot message container directly
+      if (!lastText || lastText.trim() === '') {
+        const botMessages = document.querySelectorAll('.bot-message');
+        if (botMessages.length > 0) {
+          const lastBotMessage = botMessages[botMessages.length - 1];
+          lastText = getTextFromNode(lastBotMessage);
+          responseElement = lastBotMessage;
+        }
+      }
+      
+      // Avoid sending duplicate responses
+      if ((!lastText || lastText === this.lastText) && responseElement === this.lastMessageElement) {
         log('Error: Last message text not found or unchanged');
         return;
       }
-
+      
       this.lastText = lastText;
-      log('send', {
-        text: lastText,
+      this.lastMessageElement = responseElement;
+      
+      log('sending response', {
+        text: lastText.substring(0, 100) + (lastText.length > 100 ? '...' : ''),
+        element: responseElement ? responseElement.className : 'unknown'
       });
+      
       this.socket.send(
         JSON.stringify({
           type: 'answer',
@@ -170,20 +264,57 @@ class App {
         })
       );
 
-      if (!stopButton) {
+      // Check if generation is complete by looking for absence of loading indicators
+      // GAPGPT.SELECTOR.UPDATE.ME: Update these selectors for gapgpt.app's completion indicators
+      const completionSelectors = [
+        '.q-spinner', // Spinner disappears when done
+        '.loading',
+        '[aria-label*="loading" i]',
+        '[aria-label*="در حال تولید" i]',
+        '.bot-message-generating', // If they add a specific class during generation
+        '.message-container:not(.bot-message)' // If user message appears after bot response
+      ];
+      
+      let isGenerating = false;
+      for (const selector of completionSelectors) {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+          // Check if any loading indicators are still active/visible
+          for (const element of elements) {
+            const style = window.getComputedStyle(element);
+            if (style.display !== 'none' && style.visibility !== 'hidden' && 
+                style.opacity !== '0' && element.offsetParent !== null) {
+              isGenerating = true;
+              break;
+            }
+          }
+          if (isGenerating) break;
+        }
+      }
+      
+      // Alternative: check if we have a new user message after our prompt
+      // This would indicate the bot has finished and the user can type again
+      if (!isGenerating) {
+        const userMessages = document.querySelectorAll('.message-container.bg-user');
+        if (userMessages.length > 0) {
+          const lastUserMessage = userMessages[userMessages.length - 1];
+          // If the last user message is after our last sent message, we're done
+          // This is a heuristic - in practice we might need a better approach
+          isGenerating = false; // Assume done if we can't detect generation
+        }
+      }
+      
+      if (!isGenerating) {
         this.observer.disconnect();
 
         if (this.stop) return;
         this.stop = true;
-        log('send', {
-          type: 'stop',
-        });
+        log('sending stop signal');
         this.socket.send(
           JSON.stringify({
             type: 'stop',
           })
         );
-
       }
     });
 
@@ -191,6 +322,8 @@ class App {
       childList: true,
       subtree: true,
       characterData: true,
+      attributes: true, // Watch for attribute changes (like class additions)
+      attributeFilter: ['class', 'style', 'aria-label', 'data-processed']
     };
     this.observer.observe(document.body, observerConfig);
   }
