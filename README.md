@@ -1,12 +1,12 @@
-# GapGPT — ChatGPT Web → Local API (English)
+# GapGPT Web → Local API (English)
 
 [فارسی](./README.Fa.md) | [中文](./README.zh.md)
 
-This repository runs a small local Node.js server plus a Tampermonkey browser script that converts the ChatGPT web UI into a local HTTP API. It is a convenience/educational project adapted from upstream work (see credits).
+This repository runs a small local Node.js server plus a Tampermonkey browser script that converts the gapgpt web UI into a local HTTP API. It is a convenience/educational project adapted from upstream work (see credits).
 
 ## Quick highlights
 - Free local API (uses your browser session)
-- Works with web ChatGPT (including gpt-4 if your account has access)
+- Works with web gapgpt (including gpt-4 if your account has access)
 - Designed for local development and experimentation
 
 ![Demo](./demo.gif)
@@ -60,9 +60,10 @@ http://localhost:8766/v1/chat/completions
 ```
 
 ## Upstream and credits
-This project is adapted from `zsodur/chatgpt-api-by-browser-script`. Please review the original repository and its license before publishing.
+This project is adapted from `zsodur/gapgpt-api-by-browser-script`. Please review the original repository and its license before publishing.
 
-- Upstream: https://github.com/zsodur/chatgpt-api-by-browser-script
+- gapgpt provider: https://gapgpt.app
+- Upstream: https://github.com/zsodur/gapgpt-api-by-browser-script
 - Published by: https://github.com/AmirArmaniya
 
 ## License (recommended)
@@ -96,13 +97,3 @@ Or use `docker-compose up` as documented earlier.
 - Q: Will I get into legal trouble? A: I am not a lawyer. This project has potential Terms-of-Service and copyright implications — publish at your own risk. See `SECURITY.md` and the license note.
 - Q: Do you accept contributions? A: This fork is published for visibility only; contributions are disabled by design in the README. You can change that if you want.
 - Q: How do I stop the service? A: Kill the Node process or stop the Docker container.
-
-## Publishing checklist (before making this repo public)
-- [ ] Verify upstream license and obtain permission if required (critical).
-- [ ] Keep or replace any files that have incompatible licenses.
-- [ ] Add a short demo GIF or 30s video showing the local demo (we have `demo.gif`).
-- [ ] Add a short `SECURITY.md` and a clear Disclaimer (done).
-- [ ] Create a release with a short description and `LICENSE` file (done — recommended MIT template included).
-
----
-If you want, I can now commit these changes and prepare a release draft file. Otherwise publish when ready.
