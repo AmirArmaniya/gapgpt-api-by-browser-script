@@ -63,7 +63,7 @@ http://localhost:8766/v1/chat/completions
 This project is adapted from `zsodur/gapgpt-api-by-browser-script`. Please review the original repository and its license before publishing.
 
 - gapgpt provider: https://gapgpt.app
-- Upstream: https://github.com/zsodur/gapgpt-api-by-browser-script
+- Upstream: https://github.com/zsodur/chatgpt-api-by-browser-script
 - Published by: https://github.com/AmirArmaniya
 
 ## License (recommended)
