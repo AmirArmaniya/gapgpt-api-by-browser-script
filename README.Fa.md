@@ -1,6 +1,6 @@
 # GapGPT API
 [English](./README.md) | [中文](./README.zh.md) | [فارسی](./README.Fa.md)
-این پروژه نسخه وب ChatGPT را از طریق اسکریپت Tampermonkey در مرورگر شما به یک **رابط API محلی و آموزشی** تبدیل می‌کند.
+این پروژه نسخه وب GapGPT را از طریق اسکریپت Tampermonkey در مرورگر شما به یک **رابط API محلی و آموزشی** تبدیل می‌کند.
 
 ## نکات مهم (خواندن توصیه می‌شود)
 - این پروژه صرفاً هدف آموزشی و نمایشی دارد.
@@ -33,7 +33,7 @@ http://localhost:8766/v1/chat/completions
 - پیشنهاد می‌شود از مجوز `MIT` (الگوی موجود در فایل `LICENSE`) استفاده کنید، اما ابتدا مجوز upstream را بررسی کنید.
 
 ## قدردانی
-این پروژه بر پایه [zsodur/chatgpt-api-by-browser-script](https://github.com/zsodur/chatgpt-api-by-browser-script) ساخته شده است. لطفاً اعتبار و مجوز اصلی را بررسی کنید.
+این پروژه بر پایه [zsodur/ChatGPT-api-by-browser-script](https://github.com/zsodur/ChatGPT-api-by-browser-script) ساخته شده است. لطفاً اعتبار و مجوز اصلی را بررسی کنید.
 
 ---
 ساخته شده با ❤️ — منتشر شده توسط: https://github.com/AmirArmaniya
